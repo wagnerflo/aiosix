@@ -1,0 +1,5 @@
+__pycache__/
+.pyenv/
+!.pyenv/.keep
+aiosix/posix.so
+build/

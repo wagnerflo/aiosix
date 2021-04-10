@@ -2,6 +2,7 @@
 #include <Python.h>
 #include <aio.h>
 #include <signal.h>
+#include <sys/event.h>
 
 #define CAPSULE_AIOCB "struct aiocb"
 
@@ -17,7 +18,7 @@ static inline int require_nargs(const char* name, Py_ssize_t nargs, Py_ssize_t e
 }
 
 static PyObject* aio_read_kevent(PyObject* m, PyObject* const* args, Py_ssize_t nargs) {
-  if (require_nargs("aio_read_kevent", nargs, 4)) {
+  if (require_nargs("aio_read_kevent", nargs, 5)) {
     return NULL;
   }
 
@@ -38,23 +39,25 @@ static PyObject* aio_read_kevent(PyObject* m, PyObject* const* args, Py_ssize_t 
   if (!iocb)
     return PyErr_NoMemory();
 
-  PyObject* caps = PyCapsule_New(iocb, CAPSULE_AIOCB, NULL);
-
   iocb->aio_fildes = PyLong_AsUnsignedLong(file_fd);
-  iocb->aio_offset = 0;
+  iocb->aio_offset = PyLong_AsUnsignedLong(offset);
   iocb->aio_buf = PyByteArray_AsString(bytearray);
   iocb->aio_nbytes = PyByteArray_Size(bytearray);
 
   iocb->aio_sigevent.sigev_notify = SIGEV_KEVENT;
   iocb->aio_sigevent.sigev_notify_kqueue = PyLong_AsUnsignedLong(kqueue_fd);
-  iocb->aio_sigevent.sigev_value.sigval_ptr = caps;
+  iocb->aio_sigevent.sigev_notify_kevent_flags = EV_ONESHOT;
+  // !!!! BAD IDEA ????
+  // event might get lost (according to people on the internet) and thus
+  // object lost, too
+  iocb->aio_sigevent.sigev_value.sigval_ptr = args[4];
 
   if (aio_read(iocb)) {
     PyErr_SetFromErrno(PyExc_OSError);
     return NULL;
   }
 
-  return caps;
+  Py_RETURN_NONE;
 }
 
 // PyCapsule_IsValid

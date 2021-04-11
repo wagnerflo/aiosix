@@ -21,11 +21,14 @@ setup(
     ],
     license_files=["LICENSE"],
     python_requires=">=3.8",
-    ext_modules=[
-        Extension(
-            "aiosix.posix",
-            sources=["aiosix/posix.c"],
-        ),
+    setup_requires=[
+        "cffi>=1.0.0",
+    ],
+    install_requires=[
+        "cffi>=1.0.0",
+    ],
+    cffi_modules=[
+        "cffi/build.py:ffibuilder",
     ],
     packages=[
         "aiosix",

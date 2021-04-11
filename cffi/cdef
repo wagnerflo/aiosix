@@ -1,0 +1,31 @@
+// -*- mode: c -*-
+
+typedef int... off_t;
+
+/* Even though it is part of POSIX, we don't include aio_sigevent here.
+   It's contents are not the same on all platforms because the provide
+   different aio request completion notifications.
+
+   Specifically FreeBSD allows notifications through kqueue(2) by non
+   standard fields in struct sigevent. See aiocb_kqueue. */
+struct aiocb {
+    int            aio_fildes;      // File descriptor.
+    off_t          aio_offset;      // File offset.
+    volatile void* aio_buf;         // Location of buffer.
+    size_t         aio_nbytes;      // Length of transfer.
+    int            aio_reqprio;     // Request priority offset.
+    int            aio_lio_opcode;  // Operation to be performed
+    ...;
+};
+
+/* Helper function to fill in the FreeBSD-specific parts of struct
+   sigevent for kqueue(2) event notification. */
+void aiocb_kqueue(
+  struct aiocb* iocb,
+  int fildes,
+  unsigned short kevent_flags
+);
+
+int aio_read(struct aiocb* iocb);
+int aio_error(const struct aiocb* iocb);
+ssize_t aio_return(struct aiocb* iocb);

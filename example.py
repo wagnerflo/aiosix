@@ -24,7 +24,7 @@ iocb.aio_nbytes = len(cbuf)
 # Without KQ_EV_ONESHOT, calls to kqueue.control() keep will keep
 # returning the same kevent for the aio_read() until aio_return(iocb)
 # has been called.
-lib.aiocb_kqueue(iocb, kq.fileno(), KQ_EV_ONESHOT)
+lib.aiocb_kqueue(iocb, kq.fileno(), KQ_EV_ONESHOT, 0)
 
 # Enqueue the request then wait for it to complete.
 lib.aio_read(iocb)

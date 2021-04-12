@@ -48,7 +48,7 @@ class AioKqueueSelector(KqueueSelector):
             return ready
         for kev in kev_list:
             if kev.filter == KQ_FILTER_AIO:
-                fut,cbuf,iocb = self.iocb_map.pop(kev.udata)
+                fut,cbuf,iocb = self.iocb_map.pop(kev.ident)
                 if (n := lib.aio_return(iocb)) == -1:
                     fut.set_exception(OSError(ffi.errno))
                 else:
@@ -80,11 +80,12 @@ class looped:
         iocb.aio_offset = offset
         iocb.aio_buf = cbuf
         iocb.aio_nbytes = size
-        lib.aiocb_kqueue(iocb, self.kqfd, KQ_EV_ONESHOT, fd)
+        lib.aiocb_kqueue(iocb, self.kqfd, KQ_EV_ONESHOT, 0)
         lib.aio_read(iocb)
 
         fut = self.loop.create_future()
-        self.selector.iocb_map[fd] = (fut, cbuf, iocb)
+        ident = int(ffi.cast("uintptr_t", iocb))
+        self.selector.iocb_map[ident] = (fut, cbuf, iocb)
         return fut
 
 # man read: The system guarantees to read the number of bytes requested
